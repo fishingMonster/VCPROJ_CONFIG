@@ -12,7 +12,6 @@ import ctypes
 import psutil
 tkRoot=tkinter.Tk()
 proc_dict=dict()
-BComp_path_list=list()
 #数据类型变化
 def data_reshape(out_len_str, in_offset_str, in_len_str, byte_num_str, ahp_type_str, rearrange,num_list):
     real_num_len=len(num_list[0])
@@ -171,33 +170,36 @@ def DDdemap():
 def ini_beyondcompare():
     if os.path.isfile('data_compare.ini'):
         file_ini=open('data_compare.ini','r',encoding='utf-8')
-        BComp_path_list.append(file_ini.readline())
+        path_ini=file_ini.readline()
         file_ini.close()
-        return 0
-    else:
-        return -1
+        if path_ini!='':
+            bc_path.set(path_ini)
+            return 0
+    bc_path.set('无')
+    return -1
 
 #手动配置beyond compare
 def set_beyondcompare():
-    BComp_path_list.clear()
-    BComp_path_list.append(askopenfilename(title='选择Beyond Compare.exe',filetypes = [('exe','EXE')]))
+    bc_path.set(askopenfilename(title='选择Beyond Compare.exe',filetypes = [('exe','EXE')]))
     file_ini = open('data_compare.ini', 'w', encoding='utf-8')
-    file_ini.write(BComp_path_list[0])
+    if bc_path.get()!='':
+        file_ini.write(bc_path.get())
+    else:
+        bc_path.set('无')
     file_ini.close()
     bc_butt['state']='normal'
-    set_butt['text']='已配置'
 
 #启动beyond compare
 def do_beyondcompare():
     com_file_path=askopenfilename(title='选择对比数据文件')
-    chdir,exe=os.path.split(BComp_path_list[0])
+    chdir,exe=os.path.split(bc_path.get())
     os.chdir(chdir)
     try:
         os.system(exe+' -b '+'C:/MEM_OUT.txt '+com_file_path)
     except:
         tkinter.messagebox.showinfo(title='注意', message='Beyond Compare异常,请重新配置')
         bc_butt['state']='disabled'
-        set_butt['text']='未配置'
+        bc_path.set('无')
 
 out_len=StringVar()
 in_offset=StringVar()
@@ -208,6 +210,7 @@ thread_type=StringVar()
 check_var=IntVar()
 mem_addr=IntVar()
 mem_len=IntVar()
+bc_path=StringVar()
 row_num=0
 tkRoot.title('数据比对工具')
 tkinter.Label(tkRoot,text='结果在C:\MEM_OUT.txt和剪切板中,以下非必填',background='green').grid(row=row_num,columnspan=4,sticky="we")
@@ -254,14 +257,14 @@ mem_len_entry.grid(row=5, column=3, sticky="nw",pady=5)
 main_butt=tkinter.Button(tkRoot, text="数据格式转换", command=lambda: data_extract(out_len.get(), in_offset.get(), in_len.get(), byte_type.get(), ahp_type.get(), check_var.get()), height=2, bg='orange')
 main_butt.grid(row=6, column=0, columnspan=4, padx=5, pady=5, sticky="we")
 if ini_beyondcompare()==0:
-    set_log='已配置'
     bc_state='normal'
 else:
-    set_log='待配置'
     bc_state='disabled'
-set_butt=tkinter.Button(tkRoot, text=set_log, height=1,command=set_beyondcompare)
-set_butt.grid(row=7, column=0,  padx=5, pady=5, sticky="we")
-bc_butt=tkinter.Button(tkRoot, text="Beyond Compare", height=1, bg='orange',state=bc_state,command=do_beyondcompare)
-bc_butt.grid(row=7, column=1, columnspan=3, padx=5, pady=5, sticky="we")
+set_butt=tkinter.Button(tkRoot, text='BC路径', height=1,command=set_beyondcompare)
+set_butt.grid(row=7, column=0,  padx=5, sticky="we")
+bc_path_entry=tkinter.Entry(tkRoot, textvariable=bc_path,state = 'readonly')
+bc_path_entry.grid(row=7, column=1,columnspan=2, sticky="we")
+bc_butt=tkinter.Button(tkRoot, text="BCompare", height=1, bg='orange',state=bc_state,command=do_beyondcompare)
+bc_butt.grid(row=7, column=3, columnspan=1, padx=5, pady=5, sticky="we")
 
 tkRoot.mainloop()
